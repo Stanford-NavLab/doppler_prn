@@ -105,22 +105,6 @@ def xcors_mag2(codes, weights):
 
 
 @njit(fastmath=True)
-def xcors_mag2_slow(codes, weights):
-    """Sum of squared magnitude weighted cross-correlations of codes, which is
-    an m x n matrix of codes, where m is the number of codes and n is the code
-    length. Does not precompute FFTs or use parallel processing, to save memory."""
-    m = codes.shape[0]
-    weights_matrix = toeplitz(weights)
-    mag2 = 0.0
-    for i in range(m):
-        fft_i = fft2(np.outer(codes[i, :], codes[i, :]) * weights_matrix)
-        for j in range(m):
-            fft_j = fft2(np.outer(codes[j, :], codes[j, :]))
-            mag2 += np.trace(xcor2_fft(fft_i, fft_j.conj()))
-    return mag2
-
-
-@njit(fastmath=True)
 def flip_extend(w):
     """Extend w by flipping it and appending it to itself"""
     return np.hstack((np.array([w[0]]), np.flip(w[1:]), w))
@@ -222,3 +206,45 @@ def delta_xcors_mag2(
             )
 
     return delta.sum()
+
+
+@njit(fastmath=True)
+def precompute_terms(codes, weights):
+    """Precompute terms needed for bit flip descent."""
+    extended_weights = flip_extend(weights)
+    codes_fft = fft(codes)
+    codes_padded_fft = fft(np.hstack((codes, np.zeros(codes.shape))))
+    return extended_weights, codes_fft, codes_padded_fft
+
+
+@njit(fastmath=True)
+def update_terms(a, b, codes, codes_fft, codes_padded_fft):
+    """Update precomputable terms after flipping codes[a, b]"""
+    codes[a, b] *= -1
+    codes_fft[a, :] = fft(codes[a, :])
+    codes_padded_fft[a, :] = fft(np.hstack((codes[a, :], np.zeros(codes.shape[1]))))
+
+
+@njit(fastmath=True)
+def xcors_mag2_large(codes, weights):
+    """Sum of squared magnitude weighted cross-correlations of codes, which is
+    an m x n matrix of codes, where m is the number of codes and n is the code
+    length. Start with ."""
+    m, n = codes.shape
+    weights_matrix = toeplitz(weights)
+
+    # start with codes of all ones, and then bit flip to get desired objective
+    x = np.ones((m, n))
+    obj = weights_matrix.sum() * n * m**2
+
+    # precompute terms
+    extended_weights, x_fft, x_padded_fft = precompute_terms(x, weights)
+
+    for a in range(m):
+        for b in range(n):
+            if codes[a, b] != x[a, b]:
+                obj += delta_xcors_mag2(
+                    a, b, x, weights, extended_weights, x_fft, x_padded_fft
+                )
+                update_terms(a, b, x, x_fft, x_padded_fft)
+    return obj

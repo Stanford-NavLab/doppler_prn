@@ -9,24 +9,13 @@ from rocket_fft import numpy_like
 
 numpy_like()
 
-from .core import flip_extend, delta_xcors_mag2, xcors_mag2, xcors_mag2_slow
-
-
-@njit(fastmath=True)
-def precompute_terms(codes, weights):
-    """Precompute terms needed for bit flip descent."""
-    extended_weights = flip_extend(weights)
-    codes_fft = fft(codes)
-    codes_padded_fft = fft(np.hstack((codes, np.zeros(codes.shape))))
-    return extended_weights, codes_fft, codes_padded_fft
-
-
-@njit(fastmath=True)
-def update_terms(a, b, codes, codes_fft, codes_padded_fft):
-    """Update precomputable terms after flipping codes[a, b]"""
-    codes[a, b] *= -1
-    codes_fft[a, :] = fft(codes[a, :])
-    codes_padded_fft[a, :] = fft(np.hstack((codes[a, :], np.zeros(codes.shape[1]))))
+from .core import (
+    delta_xcors_mag2,
+    xcors_mag2,
+    xcors_mag2_large,
+    precompute_terms,
+    update_terms,
+)
 
 
 @njit(fastmath=True)
@@ -71,7 +60,7 @@ def optimize(
     # initial objective value
     if compute_initial_obj:
         # cache ffts for faster computation, if memory usage is not excessive
-        curr_obj = (xcors_mag2 if m * n * n < 1e8 else xcors_mag2_slow)(codes, weights)
+        curr_obj = (xcors_mag2 if m * n * n < 1e8 else xcors_mag2_large)(codes, weights)
     else:
         curr_obj = 0.0
     obj.append(curr_obj)
