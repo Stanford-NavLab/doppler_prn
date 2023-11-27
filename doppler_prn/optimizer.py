@@ -69,4 +69,4 @@ def optimize(codes, weights, n_iter=10, patience=-1, compute_initial_obj=True):
         else:
             a += 1
 
-    return codes, obj
+    return codes, np.asarray(obj)

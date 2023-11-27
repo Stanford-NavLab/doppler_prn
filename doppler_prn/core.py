@@ -103,7 +103,7 @@ def flip_extend(w):
     return np.hstack((np.array([w[0]]), np.flip(w[1:]), w))
 
 
-@njit(fastmath=True, parallel=True)
+@njit(fastmath=True)
 def delta_acor_mag2(b, x, weights, extended_weights, x_fft, x0_fft):
     """Change in magnitude squared of weighted autocorrelation of x after
     flipping x[b].
@@ -132,7 +132,7 @@ def delta_acor_mag2(b, x, weights, extended_weights, x_fft, x0_fft):
     return -4 * x[b] * (delta1 + delta2)
 
 
-@njit(fastmath=True, parallel=True)
+@njit(fastmath=True)
 def delta_lxcor_mag2(b, x, y, weights, y_fft):
     """Change in magnitude squared of weighted crosscorrelation of x with y after
     flipping x[b].
@@ -146,7 +146,7 @@ def delta_lxcor_mag2(b, x, y, weights, y_fft):
     return -4 * x[b] * yb @ (corr - x[b] * yb)
 
 
-@njit(fastmath=True, parallel=True)
+@njit(fastmath=True)
 def delta_rxcor_mag2(b, x, y, extended_weights, x0_fft):
     """Change in magnitude squared of weighted crosscorrelation of x with y after
     flipping y[b].
@@ -164,7 +164,7 @@ def delta_rxcor_mag2(b, x, y, extended_weights, x0_fft):
     return -4 * y[b] * xb @ (corr - y[b] * xb)
 
 
-@njit(fastmath=True)
+@njit(fastmath=True, parallel=True)
 def delta_xcors_mag2(
     a, b, codes, weights, extended_weights, codes_fft, codes_padded_fft
 ):
@@ -176,7 +176,8 @@ def delta_xcors_mag2(
     # codes_padded_fft = fft(np.hstack((codes, np.zeros(codes.shape)))
     """
     m = codes.shape[0]
-    delta = delta_acor_mag2(
+    delta = np.empty(m)
+    delta[a] = delta_acor_mag2(
         b,
         codes[a, :],
         weights,
@@ -184,11 +185,12 @@ def delta_xcors_mag2(
         codes_fft[a, :],
         codes_padded_fft[a, :],
     )
-    for i in range(m):
+    for i in prange(m):
         if i == a:
             continue
-        delta += delta_lxcor_mag2(b, codes[a, :], codes[i, :], weights, codes_fft[i, :])
-        delta += delta_rxcor_mag2(
+        delta[i] = delta_lxcor_mag2(
+            b, codes[a, :], codes[i, :], weights, codes_fft[i, :]
+        ) + delta_rxcor_mag2(
             b,
             codes[i, :],
             codes[a, :],
@@ -196,4 +198,4 @@ def delta_xcors_mag2(
             codes_padded_fft[i, :],
         )
 
-    return delta
+    return delta.sum()
