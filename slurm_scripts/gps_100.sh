@@ -1,7 +1,7 @@
 #!/bin/bash
 ############################## Submit Job ######################################
 #SBATCH --time=48:00:00
-#SBATCH --job-name="gps_1000"
+#SBATCH --job-name="gps_100"
 #SBATCH --mail-user=yalan@stanford.edu
 #SBATCH --mail-type=END
 #SBATCH --output=gps_100%j.txt
