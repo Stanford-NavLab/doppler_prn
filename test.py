@@ -2,6 +2,7 @@ import numpy as np
 import time
 from doppler_prn import unif_expected_doppler_weights, optimize
 
+np.random.seed(0)
 
 f, t = 5e3, 1.0 / 1.023e6
 m, n = 31, 1023

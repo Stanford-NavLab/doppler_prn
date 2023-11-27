@@ -40,6 +40,8 @@ def step(a, b, m, n):
     else:
         a += 1
 
+    return a, b
+
 
 def optimize(codes, weights, n_iter=10, patience=-1, compute_initial_obj=True):
     """Optimize initial code using bit flip descent. Test bits sequentially,
@@ -86,6 +88,6 @@ def optimize(codes, weights, n_iter=10, patience=-1, compute_initial_obj=True):
             break
 
         # update a, b
-        step(a, b, m, n)
+        a, b = step(a, b, m, n)
 
     return codes, np.asarray(obj)

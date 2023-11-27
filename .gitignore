@@ -165,3 +165,6 @@ scratch/
 
 # macos
 .DS_Store
+
+# logs
+*.npy
