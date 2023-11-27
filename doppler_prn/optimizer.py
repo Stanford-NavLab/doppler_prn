@@ -9,7 +9,7 @@ from rocket_fft import numpy_like
 
 numpy_like()
 
-from .core import flip_extend, delta_xcors_mag2, xcors_mag2
+from .core import flip_extend, delta_xcors_mag2, xcors_mag2, xcors_mag2_slow
 
 
 @njit(fastmath=True)
@@ -69,7 +69,11 @@ def optimize(
     obj = List.empty_list(float64)
 
     # initial objective value
-    curr_obj = xcors_mag2(codes, weights) if compute_initial_obj else 0.0
+    if compute_initial_obj:
+        # cache ffts for faster computation, if memory usage is not excessive
+        curr_obj = (xcors_mag2 if m * n * n < 1e8 else xcors_mag2_slow)(codes, weights)
+    else:
+        curr_obj = 0.0
     obj.append(curr_obj)
 
     iters_not_improved = 0

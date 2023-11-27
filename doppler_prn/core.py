@@ -9,6 +9,11 @@ from rocket_fft import numpy_like
 numpy_like()
 
 
+def randb(m, n):
+    """Generate a random m x n matrix of bits"""
+    return np.random.choice((-1, 1), size=(m, n))
+
+
 @njit(fastmath=True)
 def unif_expected_doppler_weights(f_max, t, n, n_grid_points=0):
     """Weights matrix for uniformly distributed Doppler frequency [-f_max,
@@ -30,7 +35,7 @@ def doppler_weights(f, t, n):
     return np.cos(2 * np.pi * f * t * np.arange(n))
 
 
-@njit(fastmath=True, parallel=True)
+@njit(fastmath=True)
 def xcor(x, y, weights):
     """Weighted cross-correlation of x and y:
     f(x,y)[k] = \sum_{m=0}^{n-1} x[m] y[(m - k)%n] w[m - k]
@@ -59,7 +64,7 @@ def calc_weights_toeplitz(f, t, n):
     return np.cos(2 * np.pi * f * t * np.arange(n))
 
 
-@njit(fastmath=True, parallel=True)
+@njit(fastmath=True)
 def xcor_mag2(x, y, weights):
     """Squared magnitude weighted cross-correlation of real x and y
     f(x,y)[k] = \sum_{m=0}^{n-1} \sum_{l=0}^{n-1} x[m] x[(m-k)%n] y[l]
@@ -69,7 +74,7 @@ def xcor_mag2(x, y, weights):
     return np.diag(ifft2(fft2(X) * fft2(Y).conj()).real)
 
 
-@njit(fastmath=True, parallel=True)
+@njit(fastmath=True)
 def xcor2_fft(X, Y):
     """2D cross-correlation of real x and y, given their 2D FFTs X and Y"""
     return ifft2(X * Y.conj()).real
@@ -91,9 +96,25 @@ def xcors_mag2(codes, weights):
         weighted_outer_ffts[i, ...] = fft2(outer_prod * weights_matrix)
 
     mag2 = 0.0
-    for i in range(m):
+    for i in prange(m):
         for j in range(m):
             mag2 += np.trace(xcor2_fft(weighted_outer_ffts[i, ...], outer_ffts[j, ...]))
+    return mag2
+
+
+@njit(fastmath=True, parallel=True)
+def xcors_mag2_slow(codes, weights):
+    """Sum of squared magnitude weighted cross-correlations of codes, which is
+    an m x n matrix of codes, where m is the number of codes and n is the code
+    length. Does not precompute FFTs, to save memory."""
+    m = codes.shape[0]
+    weights_matrix = toeplitz(weights)
+    mag2 = 0.0
+    for i in prange(m):
+        fft_i = fft2(np.outer(codes[i, :], codes[i, :]) * weights_matrix)
+        for j in range(m):
+            fft_j = fft2(np.outer(codes[j, :], codes[j, :]))
+            mag2 += np.trace(xcor2_fft(fft_i, fft_j.conj()))
     return mag2
 
 
