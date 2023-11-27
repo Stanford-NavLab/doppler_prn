@@ -1,0 +1,4 @@
+numba==0.58.1
+numpy==1.26.2
+rocket_fft==0.2.2
+tqdm==4.66.1
