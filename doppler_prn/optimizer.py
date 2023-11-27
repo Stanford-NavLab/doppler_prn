@@ -1,7 +1,7 @@
 from tqdm import tqdm
 import numpy as np
 from numpy.fft import fft
-from numba import float64
+from numba import float64, njit
 from numba.typed import List
 
 from rocket_fft import numpy_like
@@ -9,6 +9,36 @@ from rocket_fft import numpy_like
 numpy_like()
 
 from .core import flip_extend, delta_xcors_mag2, xcors_mag2
+
+
+@njit(fastmath=True)
+def precompute_terms(codes, weights):
+    """Precompute terms needed for bit flip descent."""
+    extended_weights = flip_extend(weights)
+    codes_fft = fft(codes)
+    codes_padded_fft = fft(np.hstack((codes, np.zeros(codes.shape))))
+    return extended_weights, codes_fft, codes_padded_fft
+
+
+@njit(fastmath=True)
+def update_terms(a, b, codes, codes_fft, codes_padded_fft):
+    """Update precomputable terms after flipping codes[a, b]"""
+    codes[a, b] *= -1
+    codes_fft[a, :] = fft(codes[a, :])
+    codes_padded_fft[a, :] = fft(np.hstack((codes[a, :], np.zeros(codes.shape[1]))))
+
+
+@njit(fastmath=True)
+def step(a, b, m, n):
+    """Update a, b to next bit to test."""
+    if a == m - 1:
+        a = 0
+        if b == n - 1:
+            b = 0
+        else:
+            b += 1
+    else:
+        a += 1
 
 
 def optimize(codes, weights, n_iter=10, patience=-1, compute_initial_obj=True):
@@ -22,9 +52,7 @@ def optimize(codes, weights, n_iter=10, patience=-1, compute_initial_obj=True):
         patience = m * n
 
     # precompute terms
-    extended_weights = flip_extend(weights)
-    codes_fft = fft(codes)
-    codes_padded_fft = fft(np.hstack((codes, np.zeros((m, n)))))
+    extended_weights, codes_fft, codes_padded_fft = precompute_terms(codes, weights)
 
     # initial objective value
     curr_obj = xcors_mag2(codes, weights) if compute_initial_obj else 0.0
@@ -42,9 +70,7 @@ def optimize(codes, weights, n_iter=10, patience=-1, compute_initial_obj=True):
 
         if delta <= 0:
             # flip the bit, update precomputable terms
-            codes[a, b] *= -1
-            codes_fft[a, :] = fft(codes[a, :])
-            codes_padded_fft[a, :] = fft(np.hstack((codes[a, :], np.zeros(n))))
+            update_terms(a, b, codes, codes_fft, codes_padded_fft)
 
             # update logs
             curr_obj += delta
@@ -60,13 +86,6 @@ def optimize(codes, weights, n_iter=10, patience=-1, compute_initial_obj=True):
             break
 
         # update a, b
-        if a == m - 1:
-            a = 0
-            if b == n - 1:
-                b = 0
-            else:
-                b += 1
-        else:
-            a += 1
+        step(a, b, m, n)
 
     return codes, np.asarray(obj)
