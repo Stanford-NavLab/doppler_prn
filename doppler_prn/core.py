@@ -95,22 +95,24 @@ def xcors_mag2(codes, weights):
         outer_ffts[i, ...] = fft2(outer_prod)
         weighted_outer_ffts[i, ...] = fft2(outer_prod * weights_matrix)
 
-    mag2 = 0.0
+    mag2 = np.empty((m, m))
     for i in prange(m):
-        for j in range(m):
-            mag2 += np.trace(xcor2_fft(weighted_outer_ffts[i, ...], outer_ffts[j, ...]))
-    return mag2
+        for j in prange(m):
+            mag2[i, j] = np.trace(
+                xcor2_fft(weighted_outer_ffts[i, ...], outer_ffts[j, ...])
+            )
+    return mag2.sum()
 
 
-@njit(fastmath=True, parallel=True)
+@njit(fastmath=True)
 def xcors_mag2_slow(codes, weights):
     """Sum of squared magnitude weighted cross-correlations of codes, which is
     an m x n matrix of codes, where m is the number of codes and n is the code
-    length. Does not precompute FFTs, to save memory."""
+    length. Does not precompute FFTs or use parallel processing, to save memory."""
     m = codes.shape[0]
     weights_matrix = toeplitz(weights)
     mag2 = 0.0
-    for i in prange(m):
+    for i in range(m):
         fft_i = fft2(np.outer(codes[i, :], codes[i, :]) * weights_matrix)
         for j in range(m):
             fft_j = fft2(np.outer(codes[j, :], codes[j, :]))
@@ -198,25 +200,25 @@ def delta_xcors_mag2(
     """
     m = codes.shape[0]
     delta = np.empty(m)
-    delta[a] = delta_acor_mag2(
-        b,
-        codes[a, :],
-        weights,
-        extended_weights,
-        codes_fft[a, :],
-        codes_padded_fft[a, :],
-    )
     for i in prange(m):
         if i == a:
-            continue
-        delta[i] = delta_lxcor_mag2(
-            b, codes[a, :], codes[i, :], weights, codes_fft[i, :]
-        ) + delta_rxcor_mag2(
-            b,
-            codes[i, :],
-            codes[a, :],
-            extended_weights,
-            codes_padded_fft[i, :],
-        )
+            delta[a] = delta_acor_mag2(
+                b,
+                codes[a, :],
+                weights,
+                extended_weights,
+                codes_fft[a, :],
+                codes_padded_fft[a, :],
+            )
+        else:
+            delta[i] = delta_lxcor_mag2(
+                b, codes[a, :], codes[i, :], weights, codes_fft[i, :]
+            ) + delta_rxcor_mag2(
+                b,
+                codes[i, :],
+                codes[a, :],
+                extended_weights,
+                codes_padded_fft[i, :],
+            )
 
     return delta.sum()
