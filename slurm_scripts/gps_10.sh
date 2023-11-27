@@ -4,8 +4,8 @@
 #SBATCH --job-name="gps_10"
 #SBATCH --mail-user=yalan@stanford.edu
 #SBATCH --mail-type=END
-#SBATCH --output=gps_10%j.txt
-#SBATCH --error=gps_10%j.txt
+#SBATCH --output=gps_10o%j.txt
+#SBATCH --error=gps_10e%j.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH -c 8
