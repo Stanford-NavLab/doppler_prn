@@ -26,4 +26,4 @@ lscpu
 
 mkdir results
 
-python3 run.py --s 0 --f 4.5e3 --t 9.77517107e-8 --m 31 --n 10230 --gs 10 --maxit 10_000_000 --name "results/gpsl5_10" --log 10_000 --obj
+python3 run.py --s $SLURM_ARRAY_TASK_ID --f 4.5e3 --t 9.77517107e-8 --m 31 --n 10230 --gs 10 --maxit 10_000_000 --name "results/gpsl5_10" --log 10_000 --obj
