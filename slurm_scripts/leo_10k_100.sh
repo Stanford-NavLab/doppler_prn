@@ -1,11 +1,11 @@
 #!/bin/bash
 ############################## Submit Job ######################################
 #SBATCH --time=48:00:00
-#SBATCH --job-name="leo_1023_1000"
+#SBATCH --job-name="leo_10k_100"
 #SBATCH --mail-user=yalan@stanford.edu
 #SBATCH --mail-type=END
-#SBATCH --output=leo_1023_1000%j.txt
-#SBATCH --error=leo_1023_1000%j.txt
+#SBATCH --output=leo_10k_100%j.txt
+#SBATCH --error=leo_10k_100%j.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH -c 32
@@ -26,4 +26,4 @@ lscpu
 
 mkdir results
 
-python3 run.py --s 0 --f 29.6e3 --t 2e-7 --m 300 --n 1023 --gs 1000 --maxit 1_000_000_000 --name "results/leo_1023_1000" --log 10_000 --obj
+python3 run.py --s 0 --f 29.6e3 --t 2e-7 --m 300 --n 10007 --gs 100 --maxit 1_000_000_000 --name "results/leo_10k_100" --log 10_000 --no-obj

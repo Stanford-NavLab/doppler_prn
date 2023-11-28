@@ -8,7 +8,7 @@
 #SBATCH --error=leo_1023_10%j.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH -c 16
+#SBATCH -c 32
 #SBATCH --mem=8G
 #SBATCH --partition=normal
 #####################################
