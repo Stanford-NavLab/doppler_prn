@@ -4,8 +4,6 @@ import math
 
 
 ##################################################     CHECK FUNCTIONS     ##################################################
-def chk_arrays_same(arr1, arr2, eps=1e-8):
-    return np.sum(np.abs(arr1 - arr2)) < eps
 
 
 def chk_allbin01(seq, eps=1e-8):
@@ -18,24 +16,9 @@ def chk_allpm1(seq, eps=1e-8):
     return np.sum(np.abs(np.abs(seq) - 1)) < eps
 
 
-def chk_all_neg1(seq, eps=1e-8):
-    # checks all elements of seq are -1 or +1
-    return np.sum(seq + 1) < eps
-
-
-def chk_all_fromlist(seq, arr_vals, eps=1e-8):
-    seq_flatten = seq.flatten()
-    return all((seq_flatten[:, np.newaxis] == arr_vals).any(axis=1))
-
-
 def chk_samesize(nparr1, nparr2):
     # checks two numpy arrays are the same size
     return nparr1.shape == nparr2.shape
-
-
-def chk_shape(nparr, nparr_shape):
-    # checks that numpy array (nparr) has expected shape (nparr_shape)
-    return nparr.shape == nparr_shape
 
 
 def convert_bin01_to_pm1(seq):
