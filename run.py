@@ -1,12 +1,12 @@
 import numpy as np
 import argparse
-from doppler_prn import unif_expected_doppler_weights, optimize
+from doppler_prn import unif_expected_doppler_weights, optimize, randb
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--s", help="Random seed", type=int, default=0)
-    parser.add_argument("--f", help="Doppler frequency", type=float, default=5e3)
+    parser.add_argument("--f", help="Doppler frequency", type=float, default=6e3)
     parser.add_argument("--t", help="Doppler period", type=float, default=1.0 / 1.023e6)
     parser.add_argument("--m", help="Number of codes", type=int, default=31)
     parser.add_argument("--n", help="Code length", type=int, default=1023)
@@ -24,7 +24,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--log", help="Log write frequency", type=int, default=10_000)
     parser.add_argument(
-        "--obj", help="Calculate initial objective", type=bool, default=True
+        "--obj",
+        help="Calculate initial objective",
+        action=argparse.BooleanOptionalAction,
     )
     args = parser.parse_args()
 
@@ -40,7 +42,7 @@ if __name__ == "__main__":
 
     # random initial codes
     np.random.seed(args.s)
-    initial_codes = np.random.choice((-1, 1), size=(args.m, args.n))
+    initial_codes = randb(args.m, args.n)
     optimize(
         initial_codes,
         weights,

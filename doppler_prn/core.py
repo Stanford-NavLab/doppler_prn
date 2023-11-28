@@ -208,7 +208,7 @@ def delta_xcors_mag2(
     return delta.sum()
 
 
-@njit(fastmath=True)
+@njit(fastmath=True, parallel=True)
 def precompute_terms(codes, weights):
     """Precompute terms needed for bit flip descent."""
     extended_weights = flip_extend(weights)
@@ -217,7 +217,7 @@ def precompute_terms(codes, weights):
     return extended_weights, codes_fft, codes_padded_fft
 
 
-@njit(fastmath=True)
+@njit(fastmath=True, parallel=True)
 def update_terms(a, b, codes, codes_fft, codes_padded_fft):
     """Update precomputable terms after flipping codes[a, b]"""
     codes[a, b] *= -1
@@ -229,7 +229,7 @@ def update_terms(a, b, codes, codes_fft, codes_padded_fft):
 def xcors_mag2_large(codes, weights):
     """Sum of squared magnitude weighted cross-correlations of codes, which is
     an m x n matrix of codes, where m is the number of codes and n is the code
-    length. Start with ."""
+    length. Start with code of all ones, and bit flip to get desired objective value."""
     m, n = codes.shape
     weights_matrix = toeplitz(weights)
 
