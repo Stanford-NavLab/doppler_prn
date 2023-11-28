@@ -4,10 +4,6 @@ from numpy.fft import fft, ifft, fft2, ifft2
 from numpy.lib.stride_tricks import as_strided
 from numba import njit, prange, float64, complex128
 
-from rocket_fft import numpy_like
-
-numpy_like()
-
 
 def randb(m, n):
     """Generate a random m x n matrix of bits"""
@@ -81,7 +77,7 @@ def xcor2_fft(X, Y):
 
 
 @njit(fastmath=True, parallel=True)
-def xcors_mag2(codes, weights):
+def xcors_mag2_direct(codes, weights):
     """Sum of squared magnitude weighted cross-correlations of codes, which is
     an m x n matrix of codes, where m is the number of codes and n is the code length.
     """
@@ -172,7 +168,7 @@ def delta_rxcor_mag2(b, x, y, extended_weights, x0_fft):
 
 
 @njit(fastmath=True, parallel=True)
-def delta_xcors_mag2(
+def alt_delta_xcors_mag2(
     a, b, codes, weights, extended_weights, codes_fft, codes_padded_fft
 ):
     """Change in sum of squared magnitude weighted cross-correlations of codes
@@ -208,6 +204,82 @@ def delta_xcors_mag2(
     return delta.sum()
 
 
+@njit(inline="always")
+def reverse_roll(a, left_shift):
+    """Equivalent to np.roll(a, -left_shift), with left_shift > 0"""
+    b = np.empty_like(a)
+    n = len(a)
+    b[0 : n - left_shift] = a[left_shift:n]
+    b[n - left_shift : n] = a[0:left_shift]
+    return b
+
+
+@njit(parallel=True, inline="always")
+def get_toeplitz_column(weights, b):
+    """Equivalent to toeplitz(weights)[:, b]"""
+    c = np.empty_like(weights)
+    for i in prange(len(weights)):
+        c[i] = weights[np.abs(b - i)]
+    return c
+
+
+@njit(fastmath=True, parallel=True)
+def delta_xcors_mag2(
+    a, b, codes, weights, extended_weights, codes_fft, codes_padded_fft
+):
+    """Change in sum of squared magnitude weighted cross-correlations of codes
+    after flipping bit codes[a,b].
+    # # precomputable terms
+    # extended_weights = flip_extend(weights)
+    # codes_fft = fft(codes)
+    # codes_padded_fft = fft(np.hstack((codes, np.zeros(codes.shape)))
+    """
+    m, n = codes.shape
+
+    weights_b = get_toeplitz_column(weights, b)
+    weights_b_rolled = np.roll(weights_b, -b)[1:]
+    weighted_codes = codes * weights_b
+
+    xab = codes[a, b]
+    xa_rolled = reverse_roll(codes[a, :], b).astype(float64)
+    x_weighted = weighted_codes[a, :]
+    weighted_xx_rolled_fft_conj = fft(
+        np.hstack((xa_rolled, xa_rolled)) * extended_weights
+    ).conj()
+
+    delta = np.empty(m)
+    for i in prange(m):
+        if i == a:
+            corr1 = ifft(fft(x_weighted) * codes_fft[a, :].conj()).real[1:]
+            corr2 = reverse_roll(
+                ifft(codes_padded_fft[a, :] * weighted_xx_rolled_fft_conj).real[-n:], b
+            )[1:]
+
+            v1 = np.roll(np.flip(codes[a, :]), b + 1)[1:].astype(float64)
+            v2 = xa_rolled[1:]
+            v3 = v1 * v2 * weights_b_rolled
+
+            delta1 = v1 * corr1 - xab * (v1**2 + v3)
+            delta2 = v2 * corr2 - xab * (v2**2 + v3)
+
+            delta[a] = -4 * xab * np.sum(delta1 + delta2)
+        else:
+            y_fl_b = reverse_roll(codes[i, :], b + 1)[::-1].astype(float64)
+            y_rb = reverse_roll(codes[i, :], b).astype(float64)
+
+            corr1 = ifft(fft(x_weighted) * codes_fft[i, :].conj()).real
+            corr2 = reverse_roll(
+                ifft(codes_padded_fft[i, :] * weighted_xx_rolled_fft_conj).real[-n:], b
+            )
+
+            ip1 = y_fl_b * (corr1 - xab * y_fl_b)
+            ip2 = y_rb * (corr2 - xab * y_rb)
+
+            delta[i] = -4 * xab * np.sum(ip1 + ip2)
+
+    return delta.sum()
+
+
 @njit(fastmath=True, parallel=True)
 def precompute_terms(codes, weights):
     """Precompute terms needed for bit flip descent."""
@@ -226,7 +298,7 @@ def update_terms(a, b, codes, codes_fft, codes_padded_fft):
 
 
 @njit(fastmath=True)
-def xcors_mag2_large(codes, weights):
+def xcors_mag2(codes, weights):
     """Sum of squared magnitude weighted cross-correlations of codes, which is
     an m x n matrix of codes, where m is the number of codes and n is the code
     length. Start with code of all ones, and bit flip to get desired objective value."""

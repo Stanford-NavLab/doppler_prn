@@ -1,24 +1,19 @@
-from tqdm import tqdm
+"""Coordinate/bit-flip descent optimizer for Doppler PRN codes."""
+import pickle
 import numpy as np
-from numpy.fft import fft
+from tqdm import tqdm
 from numba import float64, njit
 from numba.typed import List
-import pickle
-
-from rocket_fft import numpy_like
-
-numpy_like()
 
 from .core import (
     delta_xcors_mag2,
     xcors_mag2,
-    xcors_mag2_large,
     precompute_terms,
     update_terms,
 )
 
 
-@njit(fastmath=True)
+@njit
 def step(a, b, m, n):
     """Update a, b to next bit to test."""
     if a == m - 1:
@@ -59,8 +54,7 @@ def optimize(
 
     # initial objective value
     if compute_initial_obj:
-        # cache ffts for faster computation, if memory usage is not excessive
-        curr_obj = (xcors_mag2 if m * n * n < 1e8 else xcors_mag2_large)(codes, weights)
+        curr_obj = xcors_mag2(codes, weights)
     else:
         curr_obj = 0.0
     obj.append(curr_obj)
