@@ -13,7 +13,7 @@
 #SBATCH --partition=normal
 #####################################
 
-# run using sbatch --array=10 gps_exact.sh to run with 10 random seeds
+# run using sbatch --array=0-9 gps_exact.sh to run with 10 random seeds
 
 # Load module for Gurobi and Julia (should be most up-to-date version, i.e. 1.7.2)
 module load python/3.9
