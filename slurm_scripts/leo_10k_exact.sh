@@ -26,4 +26,4 @@ lscpu
 
 mkdir results
 
-python3 run.py --s 0 --f 29.6e3 --t 2e-7 --m 300 --n 10007 --gs 0 --maxit 1_000_000_000 --name "results/leo_10k_exact" --log 10_000
+python3 run.py --s 0 --f 29.6e3 --t 2e-7 --m 300 --n 10007 --gs 0 --maxit 1_000_000_000 --name "results/leo_10k_exact" --log 10_000 --no-obj
