@@ -50,7 +50,7 @@ def optimize(
     extended_weights, codes_fft, codes_padded_fft = precompute_terms(codes, weights)
 
     # save changes in objective
-    obj = List.empty_list(float64)
+    obj = []
 
     # initial objective value
     if compute_initial_obj:
@@ -85,11 +85,11 @@ def optimize(
             break
 
         # write to log
-        if log_path != "" and iter % log_freq == 0:
+        if log_path != "" and iter > 0 and iter % log_freq == 0:
             pickle.dump(
                 {
                     "codes": codes,
-                    "obj": np.asarray(obj),
+                    "obj": obj,
                 },
                 open(log_path + ".pkl", "wb"),
             )
@@ -98,13 +98,13 @@ def optimize(
         a, b = step(a, b, m, n)
 
     # write to log
-    if log_path != "" and iter % log_freq == 0:
+    if log_path != "":
         pickle.dump(
             {
                 "codes": codes,
-                "obj": np.asarray(obj),
+                "obj": obj,
             },
             open(log_path + ".pkl", "wb"),
         )
 
-    return codes, np.asarray(obj)
+    return codes, obj
