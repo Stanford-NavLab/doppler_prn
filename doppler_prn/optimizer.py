@@ -90,6 +90,7 @@ def optimize(
                 {
                     "codes": codes,
                     "obj": obj,
+                    "weights": weights,
                 },
                 open(log_path + ".pkl", "wb"),
             )
@@ -103,6 +104,7 @@ def optimize(
             {
                 "codes": codes,
                 "obj": obj,
+                "weights": weights,
             },
             open(log_path + ".pkl", "wb"),
         )
