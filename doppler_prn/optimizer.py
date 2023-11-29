@@ -67,7 +67,7 @@ def optimize(
             a, b, codes, weights, extended_weights, codes_fft, codes_padded_fft
         )
 
-        if delta <= 0:
+        if delta < 0:
             # flip the bit, update precomputable terms
             update_terms(a, b, codes, codes_fft, codes_padded_fft)
 
