@@ -1,15 +1,15 @@
 #!/bin/bash
 ############################## Submit Job ######################################
-#SBATCH --time=48:00:00
-#SBATCH --job-name="gpsl5_1000"
+#SBATCH --time=24:00:00
+#SBATCH --job-name="gold_weil"
 #SBATCH --mail-user=yalan@stanford.edu
 #SBATCH --mail-type=END
-#SBATCH --output=gpsl5_1000%j.txt
-#SBATCH --error=gpsl5_1000%j.txt
+#SBATCH --output=gold_weil%j.txt
+#SBATCH --error=gold_weil%j.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH -c 32
-#SBATCH --mem=8G
+#SBATCH --mem=2G
 #SBATCH --partition=normal
 #####################################
 
@@ -26,4 +26,4 @@ lscpu
 
 mkdir results
 
-python3 run.py --s $SLURM_ARRAY_TASK_ID --f 4.5e3 --t 9.77517107e-8 --m 31 --n 10230 --gs 1000 --maxit 1_000_000_000 --name "results/gpsl5_1000" --log 350_000 --obj
+python3 gold_weil.py

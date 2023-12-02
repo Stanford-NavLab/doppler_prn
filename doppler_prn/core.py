@@ -100,6 +100,24 @@ def xcors_mag2_direct(codes, weights):
     return mag2.sum()
 
 
+@njit(fastmath=True, parallel=True)
+def xcor_mag2_at_doppler(codes, f, t):
+    """Sum of squared magnitude weighted cross-correlations of codes, which is
+    an m x n matrix of codes, where m is the number of codes and n is the code length.
+    Evaluated at Doppler frequency f and chip period t"""
+    m, n = codes.shape
+    d = np.array([np.exp(-2j * np.pi * f * t * k) for k in range(-n, n)])
+    obj = np.empty((m, m))
+    for i in range(m):
+        for j in range(m):
+            x0 = np.hstack((codes[i, :], np.zeros(n)))
+            yyd = np.hstack((codes[j, :], codes[j, :])) * d
+            xcor_val = ifft(fft(x0) * fft(yyd).conj())[-n:].conj()
+            obj[i, j] = np.sum(np.abs(xcor_val) ** 2)
+
+    return obj.sum()
+
+
 @njit(fastmath=True)
 def flip_extend(w):
     """Extend w by flipping it and appending it to itself"""
