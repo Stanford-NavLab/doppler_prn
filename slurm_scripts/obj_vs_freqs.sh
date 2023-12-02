@@ -1,6 +1,6 @@
 #!/bin/bash
 ############################## Submit Job ######################################
-#SBATCH --time=24:00:00
+#SBATCH --time=6:00:00
 #SBATCH --job-name="obj_vs_freqs"
 #SBATCH --mail-user=yalan@stanford.edu
 #SBATCH --mail-type=END

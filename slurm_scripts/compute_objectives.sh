@@ -1,6 +1,6 @@
 #!/bin/bash
 ############################## Submit Job ######################################
-#SBATCH --time=24:00:00
+#SBATCH --time=6:00:00
 #SBATCH --job-name="compute_objectives"
 #SBATCH --mail-user=yalan@stanford.edu
 #SBATCH --mail-type=END
