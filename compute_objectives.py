@@ -15,7 +15,7 @@ if __name__ == "__main__":
         if "exact" in fname:
             # no need to compute true objective
             data["final_obj_true"] = data["obj"][-1]
-        else:
+        elif "seed=0" in fname:
             # compute true objective
             codes, weights = data["codes"], data["weights"]
             extended_weights, codes_fft, codes_padded_fft = precompute_terms(
