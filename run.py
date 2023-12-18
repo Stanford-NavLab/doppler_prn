@@ -1,6 +1,6 @@
 import numpy as np
 import argparse
-from doppler_prn import unif_expected_doppler_weights, optimize, randb
+from doppler_prn import triangle_expected_doppler_weights, optimize, randb
 
 
 if __name__ == "__main__":
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         exp_name += "_seed=%d" % args.s
 
     # weights defining cross-correlation with Doppler
-    weights = unif_expected_doppler_weights(
+    weights = triangle_expected_doppler_weights(
         args.f, args.t, args.n, n_grid_points=args.gs
     )
 

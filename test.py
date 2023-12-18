@@ -7,7 +7,7 @@ np.random.seed(0)
 m, n = 31, 1023
 a, b = np.random.choice(m), np.random.choice(n)
 
-# weights = unif_expected_doppler_weights(6e3, 1.0 / 1.023e6, n)
+# weights = triangle_expected_doppler_weights(6e3, 1.0 / 1.023e6, n)
 x = randb(m, n)
 
 f, t = 6e3, 1.0 / 1.023e6

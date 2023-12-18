@@ -12,8 +12,8 @@ def randb(m, n):
 
 @njit(fastmath=True)
 def unif_expected_doppler_weights(f_max, t, n, n_grid_points=0):
-    """Weights matrix for uniformly distributed Doppler frequency [-f_max,
-    f_max] and chip period t"""
+    """Weights matrix for uniformly distributed relative Doppler
+    frequency [-f_max, f_max] and chip period t"""
     if n_grid_points > 0:
         # discrete approximation
         weights = np.zeros(n, dtype=float64)
@@ -23,6 +23,22 @@ def unif_expected_doppler_weights(f_max, t, n, n_grid_points=0):
 
     # compute exact expected value
     return np.sinc(2 * f_max * t * np.arange(n))
+
+
+@njit(fastmath=True)
+def triangle_expected_doppler_weights(f_max, t, n, n_grid_points=0):
+    """Weights matrix for triangularly distributed relative Doppler
+    frequency [-f_max, f_max] and chip period t"""
+    if n_grid_points > 0:
+        # discrete approximation
+        weights = np.zeros(n, dtype=float64)
+        for f in np.linspace(-f_max, f_max, n_grid_points):
+            for f2 in np.linspace(-f_max, f_max, n_grid_points):
+                weights += doppler_weights(f - f2, t, n) / n_grid_points**2
+        return weights
+
+    # compute exact expected value
+    return np.sinc(2 * f_max * t * np.arange(n)) ** 2
 
 
 @njit(fastmath=True)
@@ -108,8 +124,8 @@ def xcor_mag2_at_doppler(codes, f, t):
     m, n = codes.shape
     d = np.array([np.exp(-2j * np.pi * f * t * k) for k in range(-n, n)])
     obj = np.empty((m, m))
-    for i in range(m):
-        for j in range(m):
+    for i in prange(m):
+        for j in prange(m):
             x0 = np.hstack((codes[i, :], np.zeros(n)))
             yyd = np.hstack((codes[j, :], codes[j, :])) * d
             xcor_val = ifft(fft(x0) * fft(yyd).conj())[-n:].conj()

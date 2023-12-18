@@ -17,10 +17,7 @@ if __name__ == "__main__":
             [xcor_mag2_at_doppler(opt["codes"], f, 9.77517107e-7) for f in freqs]
         ),
         "bench": np.array(
-            [
-                xcor_mag2_at_doppler(gold_31_1023, f, 9.77517107e-7)
-                for f in freqs
-            ]
+            [xcor_mag2_at_doppler(gold_31_1023, f, 9.77517107e-7) for f in freqs]
         ),
     }
 
@@ -34,10 +31,7 @@ if __name__ == "__main__":
             [xcor_mag2_at_doppler(opt["codes"], f, 9.77517107e-8) for f in freqs]
         ),
         "bench": np.array(
-            [
-                xcor_mag2_at_doppler(weil_300_10230, f, 9.77517107e-8)
-                for f in freqs
-            ]
+            [xcor_mag2_at_doppler(weil_300_10230, f, 9.77517107e-8) for f in freqs]
         ),
     }
 
