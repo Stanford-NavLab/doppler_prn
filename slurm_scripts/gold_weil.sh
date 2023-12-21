@@ -1,6 +1,6 @@
 #!/bin/bash
 ############################## Submit Job ######################################
-#SBATCH --time=6:00:00
+#SBATCH --time=48:00:00
 #SBATCH --job-name="gold_weil"
 #SBATCH --mail-user=yalan@stanford.edu
 #SBATCH --mail-type=END
@@ -9,7 +9,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH -c 32
-#SBATCH --mem=2G
+#SBATCH --mem=4G
 #SBATCH --partition=normal
 #####################################
 
