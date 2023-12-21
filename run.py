@@ -1,6 +1,14 @@
-import numpy as np
 import argparse
-from doppler_prn import triangle_expected_doppler_weights, optimize, randb
+import pickle
+import numpy as np
+from doppler_prn import (
+    triangle_expected_doppler_weights,
+    expected_doppler_weights,
+    optimize,
+    randb,
+    xcors_mag2,
+    toeplitz,
+)
 
 
 if __name__ == "__main__":
@@ -14,18 +22,23 @@ if __name__ == "__main__":
         "--gs",
         help="Grid size for approximating expected value. Zero for exact expression when available",
         type=int,
-        default=0,
+        default=1000,
     )
     parser.add_argument(
         "--maxit", help="Maximum iterations", type=int, default=10_000_000
     )
     parser.add_argument(
-        "--name", help="Base name for output files", type=str, default="gps_exact"
+        "--name", help="Base name for output files", type=str, default="gps_l1"
     )
     parser.add_argument("--log", help="Log write frequency", type=int, default=10_000)
     parser.add_argument(
         "--obj",
         help="Calculate initial objective",
+        action=argparse.BooleanOptionalAction,
+    )
+    parser.add_argument(
+        "--obj_v_freq",
+        help="Calculate objective vs observed Doppler frequency",
         action=argparse.BooleanOptionalAction,
     )
     args = parser.parse_args()
@@ -37,13 +50,13 @@ if __name__ == "__main__":
 
     # weights defining cross-correlation with Doppler
     weights = triangle_expected_doppler_weights(
-        args.f, args.t, args.n, n_grid_points=args.gs
+        args.f, args.t, args.n, n_grid_points=args.gs, normalize=True
     )
 
     # random initial codes
     np.random.seed(args.s)
     initial_codes = randb(args.m, args.n)
-    optimize(
+    log = optimize(
         initial_codes,
         weights,
         n_iter=args.maxit,
@@ -52,3 +65,18 @@ if __name__ == "__main__":
         log_freq=args.log,
         log_path=exp_name,
     )
+
+    # objective vs observed Doppler frequency
+    if args.obj_v_freq:
+        freqs = np.linspace(-args.f, args.f, 50)
+        objs = []
+        for freq in freqs:
+            weights = expected_doppler_weights(
+                freq, args.f, args.t, args.n, normalize=True
+            )
+            objs.append(xcors_mag2(log["codes"], weights, normalize=True))
+        log["doppler_freq"] = freqs
+        log["obj_vs_freq"] = np.array(objs)
+
+        if exp_name != "":
+            pickle.dump(log, open(exp_name + ".pkl", "wb"))

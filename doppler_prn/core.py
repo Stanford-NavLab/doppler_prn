@@ -19,32 +19,66 @@ def unif_expected_doppler_weights(f_max, t, n, n_grid_points=0):
         weights = np.zeros(n, dtype=float64)
         for f in np.linspace(-f_max, f_max, n_grid_points):
             weights += doppler_weights(f, t, n) / n_grid_points
-        return weights
+    else:
+        # compute exact expected value
+        weights = np.sinc(2 * f_max * t * np.arange(n))
 
-    # compute exact expected value
-    return np.sinc(2 * f_max * t * np.arange(n))
+    return weights
 
 
 @njit(fastmath=True)
-def triangle_expected_doppler_weights(f_max, t, n, n_grid_points=0):
+def triangle_expected_doppler_weights(f_max, t, n, n_grid_points=1000, normalize=True):
     """Weights matrix for triangularly distributed relative Doppler
     frequency [-f_max, f_max] and chip period t"""
-    if n_grid_points > 0:
-        # discrete approximation
+    if normalize:
+        assert n_grid_points > 0
         weights = np.zeros(n, dtype=float64)
-        for f in np.linspace(-f_max, f_max, n_grid_points):
-            for f2 in np.linspace(-f_max, f_max, n_grid_points):
-                weights += doppler_weights(f - f2, t, n) / n_grid_points**2
-        return weights
+        for f_dop in np.linspace(-f_max, f_max, n_grid_points):
+            weights_f_dop = np.zeros(n, dtype=float64)
+            for f_rec in np.linspace(-f_max, f_max, n_grid_points):
+                weights_f_dop += doppler_weights(f_rec - f_dop, t, n) / n_grid_points
+            weights_f_dop /= toeplitz(weights_f_dop).sum()
+            weights += weights_f_dop / n_grid_points
+    else:
+        if n_grid_points > 0:
+            # discrete approximation
+            weights = np.zeros(n, dtype=float64)
+            for f in np.linspace(-f_max, f_max, n_grid_points):
+                for f2 in np.linspace(-f_max, f_max, n_grid_points):
+                    weights += doppler_weights(f - f2, t, n) / n_grid_points**2
+        else:
+            # compute exact expected value
+            weights = np.sinc(2 * f_max * t * np.arange(n)) ** 2
 
-    # compute exact expected value
-    return np.sinc(2 * f_max * t * np.arange(n)) ** 2
+    return weights
 
 
 @njit(fastmath=True)
 def doppler_weights(f, t, n):
-    """Weights matrix for Doppler frequency f and chip period t"""
+    """Weights vector for relative Doppler frequency f and chip period t"""
     return np.cos(2 * np.pi * f * t * np.arange(n))
+
+
+@njit(fastmath=True)
+def expected_doppler_weights(f, f_max, t, n, n_grid_points=0, normalize=False):
+    """Weights matrix for Doppler frequency f, chip period t, and receiver sweep
+    frequency [-f_max, f_max]"""
+    if n_grid_points > 0:
+        weights = np.zeros(n)
+        for f1 in np.linspace(-f_max, f_max, n_grid_points):
+            weights += doppler_weights(f1 - f, t, n) / n_grid_points
+    else:
+        weights = np.ones(n)
+        num = np.sin(2 * np.pi * (f_max - f) * t * np.arange(n)) + np.sin(
+            2 * np.pi * (f_max + f) * t * np.arange(n)
+        )
+        den = 4 * np.pi * f_max * t * np.arange(n)
+        weights[den != 0] = num[den != 0] / den[den != 0]
+
+    if normalize:
+        return weights / toeplitz(weights).sum()
+
+    return weights
 
 
 @njit(fastmath=True)
@@ -120,7 +154,7 @@ def xcors_mag2_direct(codes, weights):
 def xcor_mag2_at_doppler(codes, f, t):
     """Sum of squared magnitude weighted cross-correlations of codes, which is
     an m x n matrix of codes, where m is the number of codes and n is the code length.
-    Evaluated at Doppler frequency f and chip period t"""
+    Evaluated at relative Doppler frequency f and chip period t"""
     m, n = codes.shape
     d = np.array([np.exp(-2j * np.pi * f * t * k) for k in range(-n, n)])
     obj = np.empty((m, m))
@@ -164,8 +198,8 @@ def delta_acor_mag2(b, x, weights, extended_weights, x_fft, x0_fft):
     v1 = x[b] * xbmk[1:]
     v2 = x[b] * xb[1:]
 
-    delta1 = xbmk[1:] @ (corr1 - v1 - v2 * wb)
-    delta2 = xb[1:] @ (corr2 - v1 * wb - v2)
+    delta1 = xbmk[1:] @ (corr1 - v1 * weights[0] - v2 * wb)
+    delta2 = xb[1:] @ (corr2 - v1 * wb - v2 * weights[0])
     return -4 * x[b] * (delta1 + delta2)
 
 
@@ -180,7 +214,7 @@ def delta_lxcor_mag2(b, x, y, weights, y_fft):
     weights_b = np.array([weights[np.abs(b - m)] for m in range(n)])
     corr = ifft(fft(x * weights_b) * y_fft.conj()).real
     yb = np.flip(np.roll(y, -b - 1)).astype(float64)
-    return -4 * x[b] * yb @ (corr - x[b] * yb)
+    return -4 * x[b] * yb @ (corr - x[b] * yb * weights[0])
 
 
 @njit(fastmath=True)
@@ -198,7 +232,7 @@ def delta_rxcor_mag2(b, x, y, extended_weights, x0_fft):
     yyd = np.hstack((yb, yb)) * extended_weights
     corr = np.roll(ifft(x0_fft * fft(yyd).conj()).real[-n:], -b)
     xb = np.roll(x, -b).astype(float64)
-    return -4 * y[b] * xb @ (corr - y[b] * xb)
+    return -4 * y[b] * xb @ (corr - y[b] * xb * extended_weights[0])
 
 
 @njit(fastmath=True, parallel=True)
@@ -293,8 +327,8 @@ def delta_xcors_mag2(
             v2 = xa_rolled[1:]
             v3 = v1 * v2 * weights_b_rolled
 
-            delta1 = v1 * corr1 - xab * (v1**2 + v3)
-            delta2 = v2 * corr2 - xab * (v2**2 + v3)
+            delta1 = v1 * corr1 - xab * (weights[0] * v1**2 + v3)
+            delta2 = v2 * corr2 - xab * (weights[0] * v2**2 + v3)
 
             delta[a] = -4 * xab * np.sum(delta1 + delta2)
         else:
@@ -306,8 +340,8 @@ def delta_xcors_mag2(
                 ifft(codes_padded_fft[i, :] * weighted_xx_rolled_fft_conj).real[-n:], b
             )
 
-            ip1 = y_fl_b * (corr1 - xab * y_fl_b)
-            ip2 = y_rb * (corr2 - xab * y_rb)
+            ip1 = y_fl_b * (corr1 - xab * y_fl_b * weights[0])
+            ip2 = y_rb * (corr2 - xab * y_rb * weights[0])
 
             delta[i] = -4 * xab * np.sum(ip1 + ip2)
 
@@ -332,16 +366,15 @@ def update_terms(a, b, codes, codes_fft, codes_padded_fft):
 
 
 @njit(fastmath=True)
-def xcors_mag2(codes, weights):
+def xcors_mag2(codes, weights, normalize=False):
     """Sum of squared magnitude weighted cross-correlations of codes, which is
     an m x n matrix of codes, where m is the number of codes and n is the code
     length. Start with code of all ones, and bit flip to get desired objective value."""
     m, n = codes.shape
-    weights_matrix = toeplitz(weights)
 
     # start with codes of all ones, and then bit flip to get desired objective
     x = np.ones((m, n))
-    obj = weights_matrix.sum() * n * m**2
+    obj = (1.0 if normalize else toeplitz(weights).sum()) * n * m**2
 
     # precompute terms
     extended_weights, x_fft, x_padded_fft = precompute_terms(x, weights)
@@ -353,4 +386,5 @@ def xcors_mag2(codes, weights):
                     a, b, x, weights, extended_weights, x_fft, x_padded_fft
                 )
                 update_terms(a, b, x, x_fft, x_padded_fft)
+
     return obj

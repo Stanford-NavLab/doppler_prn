@@ -49,15 +49,19 @@ def optimize(
     # precompute terms
     extended_weights, codes_fft, codes_padded_fft = precompute_terms(codes, weights)
 
-    # save changes in objective
-    obj = []
-
     # initial objective value
     if compute_initial_obj:
         curr_obj = xcors_mag2(codes, weights)
     else:
         curr_obj = 0.0
-    obj.append(curr_obj)
+
+    # save codes, changes in objective, weights
+    log = {
+        "codes": codes,
+        "iter": [0],
+        "obj": [curr_obj],
+        "weights": weights,
+    }
 
     iters_not_improved = 0
     a, b = 0, 0
@@ -70,43 +74,32 @@ def optimize(
         if delta < 0:
             # flip the bit, update precomputable terms
             update_terms(a, b, codes, codes_fft, codes_padded_fft)
-
-            # update logs
             curr_obj += delta
-            obj.append(curr_obj)
             iters_not_improved = 0
         else:
             # do not flip the bit
-            obj.append(curr_obj)
             iters_not_improved += 1
 
         # stop if no improvement possible
         if iters_not_improved == patience:
             break
 
-        # write to log
+        # update and write to log
         if log_path != "" and iter > 0 and iter % log_freq == 0:
-            pickle.dump(
-                {
-                    "codes": codes,
-                    "obj": obj,
-                    "weights": weights,
-                },
-                open(log_path + ".pkl", "wb"),
-            )
+            log["iter"].append(iter)
+            log["obj"].append(curr_obj)
+            pickle.dump(log, open(log_path + ".pkl", "wb"))
 
         # update a, b
         a, b = step(a, b, m, n)
 
+    # update log if needed
+    if iter != log["iter"][-1]:
+        log["iter"].append(iter)
+        log["obj"].append(curr_obj)
+
     # write to log
     if log_path != "":
-        pickle.dump(
-            {
-                "codes": codes,
-                "obj": obj,
-                "weights": weights,
-            },
-            open(log_path + ".pkl", "wb"),
-        )
+        pickle.dump(log, open(log_path + ".pkl", "wb"))
 
-    return codes, obj
+    return log

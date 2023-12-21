@@ -1,11 +1,11 @@
 #!/bin/bash
 ############################## Submit Job ######################################
 #SBATCH --time=48:00:00
-#SBATCH --job-name="leo_1023_exact"
+#SBATCH --job-name="leo_1023"
 #SBATCH --mail-user=yalan@stanford.edu
 #SBATCH --mail-type=END
-#SBATCH --output=leo_1023_exact%j.txt
-#SBATCH --error=leo_1023_exact%j.txt
+#SBATCH --output=leo_1023%j.txt
+#SBATCH --error=leo_1023%j.txt
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH -c 32
@@ -26,4 +26,4 @@ lscpu
 
 mkdir results
 
-python3 run.py --s $SLURM_ARRAY_TASK_ID --f 29.6e3 --t 2e-7 --m 300 --n 1023 --gs 0 --maxit 1_000_000_000 --name "results/leo_1023_exact" --log 700_000 --obj
+python3 run.py --s $SLURM_ARRAY_TASK_ID --f 29.6e3 --t 2e-7 --m 300 --n 1023 --gs 1_000 --maxit 1_000_000_000 --name "results/leo_1023" --log 700_000 --obj --obj_v_freq
