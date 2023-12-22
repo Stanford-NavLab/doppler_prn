@@ -50,7 +50,7 @@ if __name__ == "__main__":
     results["weil_31_10230_obj"] = xcors_mag2(codes, weights)
     results["weil_31_10230_freqs"] = np.linspace(-4.5e3, 4.5e3, 50)
     results["weil_31_10230_obj_vs_freqs"] = []
-    for freq in results["gold_300_1023_freqs"]:
+    for freq in results["weil_31_10230_freqs"]:
         weights = expected_doppler_weights(
             freq, 4.5e3, 9.77517107e-8, 10230, normalize=True
         )
