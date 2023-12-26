@@ -27,7 +27,7 @@ def unif_expected_doppler_weights(f_max, t, n, n_grid_points=0):
 
 
 @njit(fastmath=True)
-def triangle_expected_doppler_weights(f_max, t, n, n_grid_points=1000, normalize=True):
+def triangle_expected_doppler_weights(f_max, t, n, n_grid_points=0, normalize=False):
     """Weights matrix for triangularly distributed relative Doppler
     frequency [-f_max, f_max] and chip period t"""
     if normalize:

@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 from doppler_prn import (
     triangle_expected_doppler_weights,
-    expected_doppler_weights,
+    doppler_weights,
     optimize,
     randb,
     xcors_mag2,
@@ -22,7 +22,7 @@ if __name__ == "__main__":
         "--gs",
         help="Grid size for approximating expected value. Zero for exact expression when available",
         type=int,
-        default=1000,
+        default=0,
     )
     parser.add_argument(
         "--maxit", help="Maximum iterations", type=int, default=10_000_000
@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     # weights defining cross-correlation with Doppler
     weights = triangle_expected_doppler_weights(
-        args.f, args.t, args.n, n_grid_points=args.gs, normalize=True
+        args.f, args.t, args.n, n_grid_points=args.gs
     )
 
     # random initial codes
@@ -68,13 +68,11 @@ if __name__ == "__main__":
 
     # objective vs observed Doppler frequency
     if args.obj_v_freq:
-        freqs = np.linspace(-args.f, args.f, 50)
+        freqs = np.linspace(-args.f, args.f, 50) * 2
         objs = []
         for freq in freqs:
-            weights = expected_doppler_weights(
-                freq, args.f, args.t, args.n, normalize=True
-            )
-            objs.append(xcors_mag2(log["codes"], weights, normalize=True))
+            weights = doppler_weights(freq, args.t, args.n)
+            objs.append(xcors_mag2(log["codes"], weights))
         log["doppler_freq"] = freqs
         log["obj_vs_freq"] = np.array(objs)
 
