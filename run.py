@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     # objective vs observed Doppler frequency
     if args.obj_v_freq:
-        freqs = np.linspace(-args.f, args.f, 50) * 2
+        freqs = np.linspace(-args.f, args.f, 100) * 2
         objs = []
         for freq in freqs:
             weights = doppler_weights(freq, args.t, args.n)
