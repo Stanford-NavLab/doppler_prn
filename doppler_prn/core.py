@@ -158,7 +158,8 @@ def xcors_mag2_direct(codes, weights):
             mag2[i, j] = np.trace(
                 xcor2_fft(weighted_outer_ffts[i, ...], outer_ffts[j, ...])
             )
-    return mag2.sum()
+
+    return mag2.sum() - m * weights_matrix.sum()
 
 
 @njit(fastmath=True, parallel=True)
@@ -179,7 +180,7 @@ def xcor_mag2_at_reldop(codes, f, t):
                 ifft(xc_fft * y_fft).real ** 2 + ifft(xs_fft * y_fft).real ** 2
             )
 
-    return obj.sum()
+    return obj.sum() - m * toeplitz(doppler_weights(f, t, n)).sum()
 
 
 @njit(fastmath=True)
@@ -380,7 +381,7 @@ def update_terms(a, b, codes, codes_fft, codes_padded_fft):
 
 
 @njit(fastmath=True)
-def xcors_mag2(codes, weights, normalize=False):
+def xcors_mag2(codes, weights):
     """Sum of squared magnitude weighted cross-correlations of codes, which is
     an m x n matrix of codes, where m is the number of codes and n is the code
     length. Start with code of all ones, and bit flip to get desired objective value."""
@@ -388,7 +389,8 @@ def xcors_mag2(codes, weights, normalize=False):
 
     # start with codes of all ones, and then bit flip to get desired objective
     x = np.ones((m, n))
-    obj = (1.0 if normalize else toeplitz(weights).sum()) * n * m**2
+    weights_sum = toeplitz(weights).sum()
+    obj = weights_sum * n * m**2
 
     # precompute terms
     extended_weights, x_fft, x_padded_fft = precompute_terms(x, weights)
@@ -401,4 +403,5 @@ def xcors_mag2(codes, weights, normalize=False):
                 )
                 update_terms(a, b, x, x_fft, x_padded_fft)
 
-    return obj
+    # delete zero-shift autocorrelation terms
+    return obj - m * weights_sum
