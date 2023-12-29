@@ -45,6 +45,11 @@ if __name__ == "__main__":
         help="Calculate objective vs observed Doppler frequency",
         action=argparse.BooleanOptionalAction,
     )
+    parser.add_argument(
+        "--ignore_doppler",
+        help="Assume 0 relative Doppler frequency in optimization",
+        action=argparse.BooleanOptionalAction,
+    )
     args = parser.parse_args()
 
     # experiment name
@@ -53,9 +58,12 @@ if __name__ == "__main__":
         exp_name += "_seed=%d" % args.s
 
     # weights defining cross-correlation with Doppler
-    weights = triangle_expected_doppler_weights(
-        args.f, args.t, args.n, n_grid_points=args.gs
-    )
+    if args.ignore_doppler:
+        weights = np.ones(args.n)
+    else:
+        weights = triangle_expected_doppler_weights(
+            args.f, args.t, args.n, n_grid_points=args.gs
+        )
 
     # random initial codes
     np.random.seed(args.s)
