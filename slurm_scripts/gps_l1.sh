@@ -28,4 +28,6 @@ lscpu
 
 mkdir results
 
+
+python3 run.py --s $SLURM_ARRAY_TASK_ID --f 0 --t 0 --m 31 --n 1023 --gs 0 --maxit 10_000_000 --name "results/gps_l1_no_doppler" --log 10_000 --obj --obj_v_freq
 python3 run.py --s $SLURM_ARRAY_TASK_ID --f 6e3 --t 9.77517107e-7 --m 31 --n 1023 --gs 0 --maxit 10_000_000 --name "results/gps_l1" --log 10_000 --obj --obj_v_freq

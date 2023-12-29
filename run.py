@@ -3,11 +3,9 @@ import pickle
 import numpy as np
 from doppler_prn import (
     triangle_expected_doppler_weights,
-    doppler_weights,
     optimize,
     randb,
-    xcors_mag2,
-    toeplitz,
+    xcor_mag2_at_reldop,
 )
 
 
@@ -23,6 +21,12 @@ if __name__ == "__main__":
         help="Grid size for approximating expected value. Zero for exact expression when available",
         type=int,
         default=0,
+    )
+    parser.add_argument(
+        "--fpts",
+        help="Grid size for evaluating objective vs. relative Doppler frequency.",
+        type=int,
+        default=3000,
     )
     parser.add_argument(
         "--maxit", help="Maximum iterations", type=int, default=10_000_000
@@ -55,7 +59,7 @@ if __name__ == "__main__":
 
     # random initial codes
     np.random.seed(args.s)
-    initial_codes = randb(args.m, args.n)
+    initial_codes = randb((args.m, args.n))
     log = optimize(
         initial_codes,
         weights,
@@ -68,11 +72,10 @@ if __name__ == "__main__":
 
     # objective vs observed Doppler frequency
     if args.obj_v_freq:
-        freqs = np.linspace(-args.f, args.f, 100) * 2
+        freqs = np.linspace(-args.f, args.f, args.fpts) * 3
         objs = []
         for freq in freqs:
-            weights = doppler_weights(freq, args.t, args.n)
-            objs.append(xcors_mag2(log["codes"], weights))
+            objs.append(xcor_mag2_at_reldop(log["codes"], freq, args.t))
         log["doppler_freq"] = freqs
         log["obj_vs_freq"] = np.array(objs)
 

@@ -5,9 +5,9 @@ from numpy.lib.stride_tricks import as_strided
 from numba import njit, prange, float64, complex128
 
 
-def randb(m, n):
+def randb(size):
     """Generate a random m x n matrix of bits"""
-    return np.random.choice((-1, 1), size=(m, n))
+    return np.random.choice((-1, 1), size=size)
 
 
 @njit(fastmath=True)
@@ -121,6 +121,17 @@ def xcor_mag2(x, y, weights):
 
 
 @njit(fastmath=True)
+def xcor_mag2_reldop(x, y, f, t):
+    """Cross-correlation of x and y at relative Doppler frequency f and chip
+    period t"""
+    n = len(x)
+    c = np.cos(2 * np.pi * f * t * np.arange(n))
+    s = np.sin(2 * np.pi * f * t * np.arange(n))
+    Ystar = fft(y).conj()
+    return ifft(fft(x * c) * Ystar).real ** 2 + ifft(fft(x * s) * Ystar).real ** 2
+
+
+@njit(fastmath=True)
 def xcor2_fft(X, Y):
     """2D cross-correlation of real x and y, given their 2D FFTs X and Y"""
     return ifft2(X * Y.conj()).real
@@ -151,19 +162,22 @@ def xcors_mag2_direct(codes, weights):
 
 
 @njit(fastmath=True, parallel=True)
-def xcor_mag2_at_doppler(codes, f, t):
+def xcor_mag2_at_reldop(codes, f, t):
     """Sum of squared magnitude weighted cross-correlations of codes, which is
     an m x n matrix of codes, where m is the number of codes and n is the code length.
     Evaluated at relative Doppler frequency f and chip period t"""
     m, n = codes.shape
-    d = np.array([np.exp(-2j * np.pi * f * t * k) for k in range(-n, n)])
+    c = np.cos(2 * np.pi * f * t * np.arange(n))
+    s = np.sin(2 * np.pi * f * t * np.arange(n))
     obj = np.empty((m, m))
     for i in prange(m):
         for j in prange(m):
-            x0 = np.hstack((codes[i, :], np.zeros(n)))
-            yyd = np.hstack((codes[j, :], codes[j, :])) * d
-            xcor_val = ifft(fft(x0) * fft(yyd).conj())[-n:].conj()
-            obj[i, j] = np.sum(np.abs(xcor_val) ** 2)
+            xc_fft = fft(codes[i, :] * c)
+            xs_fft = fft(codes[i, :] * s)
+            y_fft = fft(codes[j, :])
+            obj[i, j] = np.sum(
+                ifft(xc_fft * y_fft).real ** 2 + ifft(xs_fft * y_fft).real ** 2
+            )
 
     return obj.sum()
 

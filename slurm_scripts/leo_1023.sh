@@ -26,4 +26,5 @@ lscpu
 
 mkdir results
 
+python3 run.py --s $SLURM_ARRAY_TASK_ID --f 0 --t 0 --m 300 --n 1023 --gs 0 --maxit 1_000_000_000 --name "results/leo_1023_no_doppler" --log 700_000 --obj --obj_v_freq
 python3 run.py --s $SLURM_ARRAY_TASK_ID --f 29.6e3 --t 2e-7 --m 300 --n 1023 --gs 0 --maxit 1_000_000_000 --name "results/leo_1023" --log 700_000 --obj --obj_v_freq
