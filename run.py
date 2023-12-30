@@ -64,7 +64,7 @@ if __name__ == "__main__":
         weights = np.ones(args.n)
     else:
         weights = unif_expected_doppler_weights(
-            args.f_opt if np.isfinite(np.f_opt) else args.f, args.t, args.n, n_grid_points=args.gs
+            args.f_opt if np.isfinite(args.f_opt) else args.f, args.t, args.n, n_grid_points=args.gs
         )
 
     # random initial codes
