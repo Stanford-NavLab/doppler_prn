@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 from doppler_prn import (
     triangle_expected_doppler_weights,
+    unif_expected_doppler_weights,
     optimize,
     randb,
     xcor_mag2_at_reldop,
@@ -13,6 +14,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--s", help="Random seed", type=int, default=0)
     parser.add_argument("--f", help="Doppler frequency", type=float, default=6e3)
+    parser.add_argument("--f_opt", help="Doppler frequency, optimized", type=float, default=np.nan)
     parser.add_argument("--t", help="Doppler period", type=float, default=1.0 / 1.023e6)
     parser.add_argument("--m", help="Number of codes", type=int, default=31)
     parser.add_argument("--n", help="Code length", type=int, default=1023)
@@ -61,8 +63,8 @@ if __name__ == "__main__":
     if args.ignore_doppler:
         weights = np.ones(args.n)
     else:
-        weights = triangle_expected_doppler_weights(
-            args.f, args.t, args.n, n_grid_points=args.gs
+        weights = unif_expected_doppler_weights(
+            args.f_opt if np.isfinite(np.f_opt) else args.f, args.t, args.n, n_grid_points=args.gs
         )
 
     # random initial codes
