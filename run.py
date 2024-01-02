@@ -4,9 +4,10 @@ import numpy as np
 from doppler_prn import (
     triangle_expected_doppler_weights,
     unif_expected_doppler_weights,
+    regularized_weights,
     optimize,
     randb,
-    xcor_mag2_at_reldop,
+    xcors_mag2_at_reldop,
 )
 
 
@@ -14,10 +15,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--s", help="Random seed", type=int, default=0)
     parser.add_argument("--f", help="Doppler frequency", type=float, default=6e3)
-    parser.add_argument("--f_opt", help="Doppler frequency, optimized", type=float, default=np.nan)
+    parser.add_argument(
+        "--f_opt", help="Doppler frequency, optimized", type=float, default=np.nan
+    )
     parser.add_argument("--t", help="Doppler period", type=float, default=1.0 / 1.023e6)
     parser.add_argument("--m", help="Number of codes", type=int, default=31)
     parser.add_argument("--n", help="Code length", type=int, default=1023)
+    parser.add_argument(
+        "--doppreg", help="Regularization for Doppler effects", type=float, default=5
+    )
     parser.add_argument(
         "--gs",
         help="Grid size for approximating expected value. Zero for exact expression when available",
@@ -47,25 +53,22 @@ if __name__ == "__main__":
         help="Calculate objective vs observed Doppler frequency",
         action=argparse.BooleanOptionalAction,
     )
-    parser.add_argument(
-        "--ignore_doppler",
-        help="Assume 0 relative Doppler frequency in optimization",
-        action=argparse.BooleanOptionalAction,
-    )
     args = parser.parse_args()
 
     # experiment name
     exp_name = args.name
     if exp_name != "":
-        exp_name += "_seed=%d" % args.s
+        exp_name += "_seed=%d_doppreg_%d" % (args.s, args.doppreg)
 
     # weights defining cross-correlation with Doppler
-    if args.ignore_doppler:
-        weights = np.ones(args.n)
-    else:
-        weights = triangle_expected_doppler_weights(
-            args.f_opt if np.isfinite(args.f_opt) else args.f, args.t, args.n, n_grid_points=args.gs
-        )
+    weights = triangle_expected_doppler_weights(
+        args.f_opt if np.isfinite(args.f_opt) else args.f,
+        args.t,
+        args.n,
+        n_grid_points=args.gs,
+    )
+    if np.isfinite(args.doppreg):
+        weights = regularized_weights(weights, args.doppreg / 10)
 
     # random initial codes
     np.random.seed(args.s)
@@ -85,7 +88,7 @@ if __name__ == "__main__":
         freqs = np.linspace(-args.f, args.f, args.fpts) * 3
         objs = []
         for freq in freqs:
-            objs.append(xcor_mag2_at_reldop(log["codes"], freq, args.t))
+            objs.append(xcors_mag2_at_reldop(log["codes"], freq, args.t))
         log["doppler_freq"] = freqs
         log["obj_vs_freq"] = np.array(objs)
 

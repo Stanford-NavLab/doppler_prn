@@ -54,6 +54,12 @@ def triangle_expected_doppler_weights(f_max, t, n, n_grid_points=0, normalize=Fa
 
 
 @njit(fastmath=True)
+def regularized_weights(regularization, coef):
+    """Build weights by regularizing zero-Doppler weights with other weights"""
+    return np.ones(regularization.shape) + coef * regularization
+
+
+@njit(fastmath=True)
 def doppler_weights(f, t, n):
     """Weights vector for relative Doppler frequency f and chip period t"""
     return np.cos(2 * np.pi * f * t * np.arange(n))
@@ -163,7 +169,7 @@ def xcors_mag2_direct(codes, weights):
 
 
 @njit(fastmath=True, parallel=True)
-def xcor_mag2_at_reldop(codes, f, t):
+def xcors_mag2_at_reldop(codes, f, t):
     """Sum of squared magnitude weighted cross-correlations of codes, which is
     an m x n matrix of codes, where m is the number of codes and n is the code length.
     Evaluated at relative Doppler frequency f and chip period t"""

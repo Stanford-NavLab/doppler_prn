@@ -7,6 +7,7 @@ from numba.typed import List
 
 from .core import (
     delta_xcors_mag2,
+    xcors_mag2_at_reldop,
     xcors_mag2,
     precompute_terms,
     update_terms,
@@ -52,14 +53,17 @@ def optimize(
     # initial objective value
     if compute_initial_obj:
         curr_obj = xcors_mag2(codes, weights)
+        obj_0_doppler = xcors_mag2_at_reldop(codes, 0, 0)
     else:
         curr_obj = 0.0
+        obj_0_doppler = 0.0
 
     # save codes, changes in objective, weights
     log = {
         "codes": codes,
         "iter": [0],
         "obj": [curr_obj],
+        "obj_0_doppler": [obj_0_doppler],
         "weights": weights,
     }
 

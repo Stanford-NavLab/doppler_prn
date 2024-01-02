@@ -11,7 +11,7 @@ a, b = np.random.choice(m), np.random.choice(n)
 x = randb((m, n))
 
 f, t = 6e3, 1.0 / 1.023e6
-print(xcor_mag2_at_reldop(x, f, t))
+print(xcors_mag2_at_reldop(x, f, t))
 
 weights = doppler_weights(f, t, n)
 print(xcors_mag2_direct(x, weights))

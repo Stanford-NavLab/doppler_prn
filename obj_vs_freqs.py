@@ -14,10 +14,10 @@ if __name__ == "__main__":
     results["gps"] = {
         "freqs": freqs,
         "opt": np.array(
-            [xcor_mag2_at_reldop(opt["codes"], f, 9.77517107e-7) for f in freqs]
+            [xcors_mag2_at_reldop(opt["codes"], f, 9.77517107e-7) for f in freqs]
         ),
         "bench": np.array(
-            [xcor_mag2_at_reldop(gold_31_1023, f, 9.77517107e-7) for f in freqs]
+            [xcors_mag2_at_reldop(gold_31_1023, f, 9.77517107e-7) for f in freqs]
         ),
     }
 
@@ -28,10 +28,10 @@ if __name__ == "__main__":
     results["gpsl5"] = {
         "freqs": freqs,
         "opt": np.array(
-            [xcor_mag2_at_reldop(opt["codes"], f, 9.77517107e-8) for f in freqs]
+            [xcors_mag2_at_reldop(opt["codes"], f, 9.77517107e-8) for f in freqs]
         ),
         "bench": np.array(
-            [xcor_mag2_at_reldop(weil_300_10230, f, 9.77517107e-8) for f in freqs]
+            [xcors_mag2_at_reldop(weil_300_10230, f, 9.77517107e-8) for f in freqs]
         ),
     }
 
@@ -41,8 +41,10 @@ if __name__ == "__main__":
     gold_300_1023 = gold_weil_data["gold_300_1023_codes"]
     results["leo_1023"] = {
         "freqs": freqs,
-        "opt": np.array([xcor_mag2_at_reldop(opt["codes"], f, 2e-7) for f in freqs]),
-        "bench": np.array([xcor_mag2_at_reldop(gold_300_1023, f, 2e-7) for f in freqs]),
+        "opt": np.array([xcors_mag2_at_reldop(opt["codes"], f, 2e-7) for f in freqs]),
+        "bench": np.array(
+            [xcors_mag2_at_reldop(gold_300_1023, f, 2e-7) for f in freqs]
+        ),
     }
 
     pickle.dump(results, open(os.path.join("results", "obj_v_freqs.pkl"), "wb"))
