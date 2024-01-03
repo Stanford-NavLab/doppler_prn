@@ -61,13 +61,13 @@ if __name__ == "__main__":
         exp_name += "_seed=%d_doppreg_%d" % (args.s, args.doppreg)
 
     # weights defining cross-correlation with Doppler
-    weights = triangle_expected_doppler_weights(
+    weights = unif_expected_doppler_weights(
         args.f_opt if np.isfinite(args.f_opt) else args.f,
         args.t,
         args.n,
         n_grid_points=args.gs,
     )
-    if np.isfinite(args.doppreg):
+    if args.doppreg >= 0:
         weights = regularized_weights(weights, args.doppreg / 10)
 
     # random initial codes

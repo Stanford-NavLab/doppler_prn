@@ -1,6 +1,6 @@
 #!/bin/bash
 ############################## Submit Job ######################################
-#SBATCH --time=48:00:00
+#SBATCH --time=2:00:00
 #SBATCH --job-name="gps_l1"
 #SBATCH --mail-user=yalan@stanford.edu
 #SBATCH --mail-type=END
@@ -9,7 +9,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH -c 32
-#SBATCH --mem=8G
+#SBATCH --mem=2G
 #SBATCH --partition=normal
 #####################################
 
