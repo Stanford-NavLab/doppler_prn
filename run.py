@@ -15,14 +15,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--s", help="Random seed", type=int, default=0)
     parser.add_argument("--f", help="Doppler frequency", type=float, default=6e3)
-    parser.add_argument(
-        "--f_opt", help="Doppler frequency, optimized", type=float, default=np.nan
-    )
     parser.add_argument("--t", help="Doppler period", type=float, default=1.0 / 1.023e6)
     parser.add_argument("--m", help="Number of codes", type=int, default=31)
     parser.add_argument("--n", help="Code length", type=int, default=1023)
     parser.add_argument(
-        "--doppreg", help="Regularization for Doppler effects", type=float, default=5
+        "--doppreg", help="Regularization for Doppler effects", type=float, default=3
     )
     parser.add_argument(
         "--gs",
@@ -62,12 +59,12 @@ if __name__ == "__main__":
 
     # weights defining cross-correlation with Doppler
     weights = unif_expected_doppler_weights(
-        args.f_opt if np.isfinite(args.f_opt) else args.f,
+        2 * args.f,
         args.t,
         args.n,
         n_grid_points=args.gs,
     )
-    if args.doppreg >= 0:
+    if 0 <= args.doppreg < 1000:
         weights = regularized_weights(weights, args.doppreg / 10)
 
     # random initial codes

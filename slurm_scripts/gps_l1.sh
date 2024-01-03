@@ -13,7 +13,7 @@
 #SBATCH --partition=normal
 #####################################
 
-# run using sbatch --array=0-100:10 gps_l1.sh to run with parameters 0,2,4,6,8
+# run using sbatch --array=0,1,2,3,4,5,6,7,8,9,10,1000 gps_l1.sh
 
 # Load module for Gurobi and Julia (should be most up-to-date version, i.e. 1.7.2)
 module load python/3.9

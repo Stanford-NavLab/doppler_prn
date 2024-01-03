@@ -29,7 +29,7 @@ def unif_expected_doppler_weights(f_max, t, n, n_grid_points=0):
 @njit(fastmath=True)
 def triangle_expected_doppler_weights(f_max, t, n, n_grid_points=0, normalize=False):
     """Weights matrix for triangularly distributed relative Doppler
-    frequency [-f_max, f_max] and chip period t"""
+    frequency [-2*f_max, 2*f_max] and chip period t"""
     if normalize:
         assert n_grid_points > 0
         weights = np.zeros(n, dtype=float64)
@@ -54,9 +54,9 @@ def triangle_expected_doppler_weights(f_max, t, n, n_grid_points=0, normalize=Fa
 
 
 @njit(fastmath=True)
-def regularized_weights(regularization, coef):
+def regularized_weights(weights, coef):
     """Build weights by regularizing zero-Doppler weights with other weights"""
-    return np.ones(regularization.shape) + coef * regularization
+    return weights + coef * np.ones(weights.shape)
 
 
 @njit(fastmath=True)

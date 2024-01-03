@@ -9,7 +9,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH -c 32
-#SBATCH --mem=8G
+#SBATCH --mem=2G
 #SBATCH --partition=normal
 #####################################
 
@@ -26,5 +26,4 @@ lscpu
 
 mkdir results
 
-python3 run.py --s $SLURM_ARRAY_TASK_ID --f 4.5e3 --t 9.77517107e-8 --m 31 --n 10230 --gs 0 --maxit 1_000_000_000 --name "results/gps_l5" --log 350_000 --obj --obj_v_freq
-python3 run.py --s $SLURM_ARRAY_TASK_ID --f 4.5e3 --t 9.77517107e-8 --m 31 --n 10230 --gs 0 --maxit 1_000_000_000 --name "results/gps_l5_no_doppler" --log 350_000 --obj --obj_v_freq --ignore_doppler
+python3 run.py --s 0 --f 4.5e3 --t 9.77517107e-8 --m 31 --n 10230 --doppreg $SLURM_ARRAY_TASK_ID --maxit 1_000_000_000 --name "results/gps_l5" --log 350_000 --obj --obj_v_freq
