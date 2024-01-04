@@ -54,12 +54,6 @@ def triangle_expected_doppler_weights(f_max, t, n, n_grid_points=0, normalize=Fa
 
 
 @njit(fastmath=True)
-def regularized_weights(weights, coef):
-    """Build weights by regularizing zero-Doppler weights with other weights"""
-    return weights + coef * np.ones(weights.shape)
-
-
-@njit(fastmath=True)
 def doppler_weights(f, t, n):
     """Weights vector for relative Doppler frequency f and chip period t"""
     return np.cos(2 * np.pi * f * t * np.arange(n))

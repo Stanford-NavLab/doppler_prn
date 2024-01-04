@@ -4,7 +4,6 @@ import numpy as np
 from doppler_prn import (
     triangle_expected_doppler_weights,
     unif_expected_doppler_weights,
-    regularized_weights,
     optimize,
     randb,
     xcors_mag2_at_reldop,
@@ -65,7 +64,10 @@ if __name__ == "__main__":
         n_grid_points=args.gs,
     )
     if 0 <= args.doppreg < 1000:
-        weights = regularized_weights(weights, args.doppreg / 10)
+        weights = weights + (args.doppreg / 10) * np.ones(weights.shape)
+    # optimize for only 0 doppler
+    elif args.doppreg >= 1000:
+        weights = np.ones(weights.shape)
 
     # random initial codes
     np.random.seed(args.s)
