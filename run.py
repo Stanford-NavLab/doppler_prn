@@ -64,7 +64,7 @@ if __name__ == "__main__":
         n_grid_points=args.gs,
     )
     if 0 <= args.doppreg < 1000:
-        weights = weights + (args.doppreg / 10) * np.ones(weights.shape)
+        weights = weights + (args.doppreg / 100) * np.ones(weights.shape)
     # optimize for only 0 doppler
     elif args.doppreg >= 1000:
         weights = np.ones(weights.shape)
