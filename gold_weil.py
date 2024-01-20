@@ -35,6 +35,20 @@ if __name__ == "__main__":
             xcors_mag2_at_reldop(codes, freq, t)
         )
 
+    # weil codes
+    f, t = 9.5e3, 1.941747572815534e-7
+    weights = unif_expected_doppler_weights(2 * f, t, 5113)
+    Xw = weil_codes(5113)
+    results["weil_8_5113_codes"] = codes
+    results["weil_8_5113_obj"] = xcors_mag2(codes, weights)
+    results["weil_8_5113_obj0"] = xcors_mag2_at_reldop(codes, 0, 0)
+    results["weil_8_5113_rel_freqs"] = np.linspace(-f, f, 3000) * 3
+    results["weil_8_5113_obj_vs_rel_freqs"] = []
+    for freq in results["weil_8_5113_rel_freqs"]:
+        results["weil_8_5113_obj_vs_rel_freqs"].append(
+            xcors_mag2_at_reldop(codes, freq, t)
+        )
+
     # extended weil codes, 31 x 10230
     f, t = 3.3e3, 9.77517107e-8
     weights = unif_expected_doppler_weights(2 * f, t, 10230)
