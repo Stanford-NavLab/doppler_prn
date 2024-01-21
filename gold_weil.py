@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # weil codes
     f, t = 9.5e3, 1.941747572815534e-7
     weights = unif_expected_doppler_weights(2 * f, t, 5113)
-    Xw = weil_codes(5113)
+    codes = weil_codes(5113)[:8, :]
     results["weil_8_5113_codes"] = codes
     results["weil_8_5113_obj"] = xcors_mag2(codes, weights)
     results["weil_8_5113_obj0"] = xcors_mag2_at_reldop(codes, 0, 0)
